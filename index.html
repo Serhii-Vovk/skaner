@@ -189,6 +189,26 @@ function doGet() {
     .setMimeType(ContentService.MimeType.TEXT);
 }
 
+async function sendToGas(barcode) {
+
+    const body = new URLSearchParams();
+
+    body.append("action", "barcode");
+    body.append("barcode", barcode);
+
+    const response = await fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        },
+        body: body.toString()
+    });
+
+    return response;
+}
+    
+
 function doPost(e) {
   try {
     const sheet = SpreadsheetApp
