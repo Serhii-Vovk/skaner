@@ -182,23 +182,58 @@ function beep() {
     } catch(e){}
 }
 
-async function sendToGas(barcode){
 
-    const body = {
-        action:"barcode",
-        barcode:barcode
-    };
-
-    const response = await fetch(GAS_URL,{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify(body)
-    });
-
-    return response;
+function doGet() {
+  return ContentService
+    .createTextOutput("WORKING")
+    .setMimeType(ContentService.MimeType.TEXT);
 }
+
+function doPost(e) {
+  try {
+    const sheet = SpreadsheetApp
+      .openById("1Vuuqv3mDKA0Ip060zMchuAvbfbzCYOWqTNHsbDTFWSg")
+      .getSheetByName("Сканування");
+
+    if (!sheet) {
+      throw new Error('Аркуш "Сканування" не знайдено');
+    }
+
+    const barcode = e.parameter.barcode;
+
+    if (!barcode) {
+      throw new Error("Штрихкод не передано");
+    }
+
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+
+    try {
+      sheet.appendRow([
+        new Date(),
+        String(barcode)
+      ]);
+    } finally {
+      lock.releaseLock();
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: "success",
+        barcode: barcode
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: "error",
+        message: error.message
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
 
 async function handleScan(code){
 
